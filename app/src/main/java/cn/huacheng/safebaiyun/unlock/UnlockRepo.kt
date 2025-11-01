@@ -1,6 +1,7 @@
 package cn.huacheng.safebaiyun.unlock
 
 import android.annotation.SuppressLint
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -22,6 +23,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @SuppressLint("MissingPermission")
@@ -39,8 +43,13 @@ object UnlockRepo {
 
     private var autoDisconnectJob: Job? = null
 
-    private val logList = mutableListOf("Hello World")
-    val logFlow: MutableStateFlow<List<String>> = MutableStateFlow(logList.toList())
+    private const val LOG_LIMIT = 200
+
+    @SuppressLint("ConstantLocale")
+    private val timeFormatter = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+
+    private val logList = mutableListOf<String>()
+    val logFlow: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
 
     fun unlock() {
         val bluetoothAdapter =
@@ -209,11 +218,22 @@ object UnlockRepo {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun log(msg: String) {
-        println(msg)
-//        logList.add(msg)
-//        GlobalScope.launch {
-//            Log.e("UnlockRepo", "log: $msg")
-//            logFlow.emit(logList.toList())
-//        }
+        val time = synchronized(timeFormatter) { timeFormatter.format(Date()) }
+        val stamped = "$time $msg"
+        println(stamped)
+        logList.add(stamped)
+        if (logList.size > LOG_LIMIT) {
+            logList.removeAt(0)
+        }
+        GlobalScope.launch {
+            logFlow.emit(logList.toList())
+        }
+    }
+
+    fun clearLogs() {
+        logList.clear()
+        GlobalScope.launch {
+            logFlow.emit(emptyList())
+        }
     }
 }

@@ -5,13 +5,18 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -68,12 +73,17 @@ fun MainView(navController: NavHostController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp), contentAlignment = Alignment.Center
+                .padding(12.dp)
         ) {
             if (hasPermission.value) {
-                UnlockView()
+                UnlockPanel()
             } else {
-                PermissionView(hasPermission)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PermissionView(hasPermission)
+                }
             }
         }
         if (showEditDialog.value) {
@@ -86,12 +96,39 @@ fun MainView(navController: NavHostController) {
 }
 
 @Composable
-private fun UnlockView() {
-    Button(onClick = {
-        showToast("开始解锁门禁")
-        UnlockRepo.unlock()
-    }, modifier = Modifier.size(144.dp, 56.dp)) {
-        Text(text = stringResource(id = R.string.unlock_door), fontSize = 18.sp)
+private fun UnlockPanel() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = {
+                    showToast("开始解锁门禁")
+                    UnlockRepo.unlock()
+                },
+                modifier = Modifier.size(144.dp, 56.dp)
+            ) {
+                Text(text = stringResource(id = R.string.unlock_door), fontSize = 18.sp)
+            }
+            OutlinedButton(onClick = { UnlockRepo.clearLogs() }) {
+                Text(text = "清空日志")
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "调试日志", fontSize = 16.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = true)
+        ) {
+            LogView(modifier = Modifier.fillMaxSize())
+        }
     }
 }
 
